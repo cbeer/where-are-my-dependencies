@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'bundler'
+require 'faraday'
+require 'optparse'
+require 'gems'
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: where-are-my-dependencies.rb [options]"
+end.parse!
+
+path = ARGV.first || "."
+
+if File.exists? File.join(path, "Gemfile.lock") 
+  path = File.join(path, "Gemfile.lock") 
+end
+
+
+lockfile = Bundler::LockfileParser.new(Bundler.read_file(path))
+
+lockfile.specs.map do |gem|
+  info = Gems.info(gem.name)
+  if info.is_a? Hash
+    if info['source_code_uri']
+      puts "#{gem.name} is hosted at #{info['source_code_uri']}"
+    else
+      puts "#{gem.name} home page is at #{info['homepage_uri']}"
+    end
+  else
+    puts info
+  end
+end
